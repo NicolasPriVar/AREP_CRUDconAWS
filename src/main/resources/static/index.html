@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f6f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #34495e;
+            border-left: 4px solid #3498db;
+            padding-left: 10px;
+            margin-top: 30px;
+        }
+
+        /* Card del formulario */
+        form {
+            background: #fff;
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        input, textarea, button {
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, textarea:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 4px rgba(52,152,219,0.4);
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        /* Tabla de propiedades */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background: #3498db;
+            color: white;
+            text-align: left;
+            padding: 12px;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f1f7fd;
+        }
+
+        .actions button {
+            width: auto;
+            margin-right: 5px;
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 5px;
+        }
+
+        .actions .edit {
+            background: #f39c12;
+        }
+
+        .actions .edit:hover {
+            background: #e67e22;
+        }
+
+        .actions .delete {
+            background: #e74c3c;
+        }
+
+        .actions .delete:hover {
+            background: #c0392b;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            table, thead, tbody, th, td, tr {
+                display: block;
+            }
+            tr { margin-bottom: 15px; }
+            th { display: none; }
+            td {
+                border: none;
+                padding: 10px;
+                position: relative;
+                padding-left: 50%;
+            }
+            td::before {
+                position: absolute;
+                left: 10px;
+                top: 10px;
+                font-weight: bold;
+                color: #555;
+                white-space: nowrap;
+            }
+            td:nth-of-type(1)::before { content: "ID"; }
+            td:nth-of-type(2)::before { content: "Dirección"; }
+            td:nth-of-type(3)::before { content: "Precio"; }
+            td:nth-of-type(4)::before { content: "Tamaño"; }
+            td:nth-of-type(5)::before { content: "Descripción"; }
+            td:nth-of-type(6)::before { content: "Acciones"; }
+        }
+    </style>
+</head>
+<body>
+<h1>🏠 CRUD de Propiedades</h1>
+
+<h2>Crear o actualizar</h2>
+<form id="propertyForm">
+    <input type="hidden" id="propertyId">
+    <input type="text" id="address" placeholder="Dirección" required>
+    <input type="number" id="price" placeholder="Precio" required>
+    <input type="number" id="size" placeholder="Tamaño (m²)" required>
+    <textarea id="description" placeholder="Descripción"></textarea>
+    <button type="submit">💾 Guardar</button>
+</form>
+
+<h2>Listado de propiedades</h2>
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Dirección</th>
+        <th>Precio</th>
+        <th>Tamaño</th>
+        <th>Descripción</th>
+        <th>Acciones</th>
+    </tr>
+    </thead>
+    <tbody id="propertiesTable"></tbody>
+</table>
+
+<script>
+    const API_URL = "http://54.236.23.146:8080/api/properties";
+
+    const form = document.getElementById("propertyForm");
+    const tableBody = document.getElementById("propertiesTable");
+
+    async function fetchProperties() {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        tableBody.innerHTML = "";
+        data.forEach(p => {
+            tableBody.innerHTML += `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.address}</td>
+          <td>$${p.price.toLocaleString()}</td>
+          <td>${p.size} m²</td>
+          <td>${p.description}</td>
+          <td class="actions">
+            <button class="edit" onclick="editProperty(${p.id})">✏️ Editar</button>
+            <button class="delete" onclick="deleteProperty(${p.id})">🗑️ Borrar</button>
+          </td>
+        </tr>
+      `;
+        });
+    }
+
+    async function editProperty(id) {
+        const res = await fetch(`${API_URL}/${id}`);
+        const p = await res.json();
+        document.getElementById("propertyId").value = p.id;
+        document.getElementById("address").value = p.address;
+        document.getElementById("price").value = p.price;
+        document.getElementById("size").value = p.size;
+        document.getElementById("description").value = p.description;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    async function deleteProperty(id) {
+        if (confirm("¿Seguro que quieres borrar esta propiedad?")) {
+            await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+            fetchProperties();
+        }
+    }
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const id = document.getElementById("propertyId").value;
+        const property = {
+            address: document.getElementById("address").value,
+            price: parseFloat(document.getElementById("price").value),
+            size: parseFloat(document.getElementById("size").value),
+            description: document.getElementById("description").value
+        };
+        if (id) {
+            await fetch(`${API_URL}/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(property)
+            });
+        } else {
+            await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(property)
+            });
+        }
+        form.reset();
+        fetchProperties();
+    });
+
+    fetchProperties();
+</script>
+</body>
+</html>
